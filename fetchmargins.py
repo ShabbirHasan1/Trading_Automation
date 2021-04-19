@@ -46,23 +46,23 @@ def FetchMarginsRequests(access_token):
     }
     payload = [{
         "exchange": "NFO",
-        "tradingsymbol": "BANKNIFTY2141532500CE",
+        "tradingsymbol": "NIFTY2142214300CE",
         "transaction_type": "SELL",
         "variety": "regular",
         "product": "MIS",
         "order_type": "MARKET",
-        "quantity": 25,
+        "quantity": 75,
         "price": 0,
         "trigger_price": 0
     },
     {
         "exchange": "NFO",
-        "tradingsymbol": "BANKNIFTY2141532500PE",
+        "tradingsymbol": "NIFTY2142214300PE",
         "transaction_type": "SELL",
         "variety": "regular",
         "product": "MIS",
         "order_type": "MARKET",
-        "quantity": 25,
+        "quantity": 75,
         "price": 0,
         "trigger_price": 0
     }

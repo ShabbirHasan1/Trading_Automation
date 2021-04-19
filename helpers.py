@@ -16,23 +16,32 @@ def fetch_ltp(token):
     return result
 
 
-def GetCurrentWeeklyOptions(strike_price=None, symbol=None):
-    # 'BANKNIFTY2141532500CE'
-    month_expiries = get_expiry_date(year=2021, month=4)
-    print(month_expiries)
+def GetCurrentWeekExpiry():
+
     now = datetime.now().date()
+    curr_year = now.year
+    curr_month = now.month
+    month_expiries = get_expiry_date(year=curr_year, month=curr_month)
     closest_expiry = datetime(2050, 1, 1).date()
+    month_expiries.add(datetime(2021, 4, 22).date())
     for date in month_expiries:
         if date >= now:
             closest_expiry = min(date, closest_expiry)
     expiry_year = str(closest_expiry.year)[2:]
     expiry_month = str(closest_expiry.month).replace('0', '')
     expiry_day = str(closest_expiry.day)
-    contract_ce = symbol + expiry_year + expiry_month + expiry_day + str(strike_price) + 'CE'
-    contract_pe = symbol + expiry_year + expiry_month + expiry_day + str(strike_price) + 'PE'
+    expiry = expiry_year + expiry_month + expiry_day
+    return expiry
 
-    contract_ce = 'BANKNIFTY2142232200CE'
-    contract_pe = 'BANKNIFTY2142232200PE'
+
+def GetCurrentWeeklyOptions(strike_price=None, symbol=None):
+    # 'BANKNIFTY2141532500CE'
+    expiry = GetCurrentWeekExpiry()
+    contract_ce = symbol + expiry + str(strike_price) + 'CE'
+    contract_pe = symbol + expiry + str(strike_price) + 'PE'
+
+    # contract_ce = 'BANKNIFTY2142230500CE'
+    # contract_pe = 'BANKNIFTY2142230500PE'
     print(contract_ce)
     print(contract_pe)
     return contract_ce, contract_pe
@@ -47,14 +56,15 @@ def GetATMStrike(symbol):
     # print(strike_price)
 
 
-def GetBNFTokens(strike):
+def GetBNFTokens():
     instruments = pd.read_csv('instruments.csv', index_col=0)
-    contract_ce, contract_pe = GetCurrentWeeklyOptions(strike, 'BANKNIFTY')
-    print(contract_ce)
-    token_ce = instruments.index[instruments['tradingsymbol'] == contract_ce].tolist()[0]
-    token_pe = instruments.index[instruments['tradingsymbol'] == contract_pe].tolist()[0]
+    expiry = GetCurrentWeekExpiry()
+    tokens = []
     token_BNF = instruments.index[instruments['tradingsymbol'] == 'NIFTY BANK'].tolist()[0]
-    tokens = [token_BNF, token_ce, token_pe]
+    tokens.append(token_BNF)
+    BNFOptions = instruments[instruments['tradingsymbol'].str.contains("BANKNIFTY"+expiry)]
+    tokens = BNFOptions.index.tolist()
+    tokens.append(token_BNF)
     return tokens
 
 
@@ -83,7 +93,6 @@ def GetStoplossTargetValues(positions_info):
         ltp = fetch_ltp(instrument_info['token'])
         combined_premium = combined_premium + ltp
         quantity = abs(instrument_info['quantity'])
-        print(ltp)
 
     stoploss = -0.10 * quantity * combined_premium
     target = 0.10 * quantity * combined_premium

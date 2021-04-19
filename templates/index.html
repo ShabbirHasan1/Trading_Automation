@@ -1,0 +1,41 @@
+<!doctype html>
+<head>
+    <title>Automated System</title>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+<!--    <script>-->
+<!--    if (!!window.EventSource) {-->
+<!--        var source = new EventSource('/run_automated_system');-->
+<!--        source.onmessage = function(e) {-->
+<!--            var m = $("#messages");-->
+<!--            if (m.text() == 'nothing received yet')-->
+<!--                m.html("<div>" + e.data + "</div>");-->
+<!--            else-->
+<!--                m.append("<div>" + e.data + "</div>");-->
+<!--        }-->
+<!--    }-->
+<!--    </script>-->
+</head>
+<body>
+    <h2 style="color: green">Success</h2>
+    <div>Access token: <b>{access_token}</b></div>
+    <h4>User login data</h4>
+    <pre>{{user_data}}</pre>
+    <a target="_blank" href="/holdings.json"><h4>Fetch user holdings</h4></a>
+    <a target="_blank" href="/orders.json"><h4>Fetch user orders</h4></a>
+    <a target="_blank" href="/margins.json"><h4>Fetch user margins</h4></a>
+    <a target="_blank" href="/put_orders.json"><h4>Put Orders</h4></a>
+    <a target="_blank" href="/positions.json"><h4>Fetch user positions</h4></a>
+    <a target="_blank" href="/get_instrument_list.json"><h4>Fetch instrument list</h4></a>
+    <a target="_blank" href="/get_ticker_data"><h4>Fetch ticker data</h4></a>
+    <a target="_blank" href="/run_automated_system"><h4>Run automated system</h4></a>
+    <a target="_blank" href="https://kite.trade/docs/connect/v1/"><h4>Checks Kite Connect docs for other calls.</h4></a>
+
+<!--    <div>-->
+<!--        <iframe frameborder="0" noresize="noresize"-->
+<!--     style='background: transparent; width: 100%; height:100%;' src="{{url_for('run_automated_system')}}"></iframe>-->
+<!--    </div>-->
+</body>
+<!--<script>-->
+<!--    $("#iframe").contents().find("body").html('');-->
+<!--</script>-->
+</html
