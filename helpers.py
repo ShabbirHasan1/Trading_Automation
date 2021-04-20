@@ -7,6 +7,12 @@ import requests
 import math
 
 
+def fetch_token(symbol):
+    instruments = pd.read_csv('instruments.csv', index_col=0)
+    token = instruments.index[instruments['tradingsymbol'] == symbol].tolist()[0]
+    return token
+
+
 def fetch_ltp(token):
     conn = psycopg2.connect(database="postgres", user="postgres", password="password", host="127.0.0.1", port="5432")
     cursor = conn.cursor()
@@ -48,8 +54,7 @@ def GetCurrentWeeklyOptions(strike_price=None, symbol=None):
 
 
 def GetATMStrike(symbol):
-    instruments = pd.read_csv('instruments.csv', index_col=0)
-    token = instruments.index[instruments['tradingsymbol'] == symbol].tolist()[0]
+    token = fetch_token(symbol)
     ltp = fetch_ltp(token)
     strike_price = int(math.ceil(ltp / 100.0)) * 100
     return strike_price
@@ -60,7 +65,7 @@ def GetBNFTokens():
     instruments = pd.read_csv('instruments.csv', index_col=0)
     expiry = GetCurrentWeekExpiry()
     tokens = []
-    token_BNF = instruments.index[instruments['tradingsymbol'] == 'NIFTY BANK'].tolist()[0]
+    token_BNF = fetch_token('NIFTY BANK')
     tokens.append(token_BNF)
     BNFOptions = instruments[instruments['tradingsymbol'].str.contains("BANKNIFTY"+expiry)]
     tokens = BNFOptions.index.tolist()
@@ -69,7 +74,6 @@ def GetBNFTokens():
 
 
 def FetchPositionsInfo(kite):
-    instruments = pd.read_csv('instruments.csv', index_col=0)
     positions = kite.positions()
     daily_positions = positions['day']
     positions_info = {}
@@ -80,22 +84,11 @@ def FetchPositionsInfo(kite):
             individual_info['value_change'] = position['sell_value'] - position['buy_value']
             individual_info['quantity'] = position['quantity']
             individual_info['multiplier'] = position['multiplier']
-            individual_info['token'] = instruments.index[instruments['tradingsymbol'] == trading_symbol].tolist()[0]
+            individual_info['token'] = fetch_token(trading_symbol)
             individual_info['tradingsymbol'] = trading_symbol
             positions_info[trading_symbol] = individual_info
 
     return positions_info
 
 
-def GetStoplossTargetValues(positions_info):
-    combined_premium = 0
-    for instrument, instrument_info in positions_info.items():
-        ltp = fetch_ltp(instrument_info['token'])
-        combined_premium = combined_premium + ltp
-        quantity = abs(instrument_info['quantity'])
-
-    stoploss = -0.10 * quantity * combined_premium
-    target = 0.10 * quantity * combined_premium
-    step = 0.10 * quantity * combined_premium
-    return stoploss, target, step
 

@@ -6,7 +6,7 @@ import requests
 logging.basicConfig(level=logging.DEBUG)
 
 
-def PlaceMarketOrders(access_token, tradingsymbol, order_type, product_type, quantity):
+def PlaceMarketOrders(access_token, tradingsymbol, transaction_type, product_type, quantity):
     API_URL = "https://api.kite.trade/orders/regular"
 
     headers = {
@@ -18,7 +18,7 @@ def PlaceMarketOrders(access_token, tradingsymbol, order_type, product_type, qua
     payload = {
         "exchange": "NFO",
         "tradingsymbol": tradingsymbol,
-        "transaction_type": order_type,
+        "transaction_type": transaction_type,
         "product": product_type,
         "order_type": "MARKET",
         "quantity": quantity,

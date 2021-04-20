@@ -3,19 +3,18 @@ import datetime
 import json
 import time
 
-from helpers import GetCurrentWeeklyOptions, fetch_ltp, GetATMStrike, FetchPositionsInfo, GetStoplossTargetValues
+from helpers import GetCurrentWeeklyOptions, fetch_ltp, GetATMStrike, FetchPositionsInfo
 from putorders import PlaceMarketOrders
 
 
-def RunSystem(kite, access_token, lots):
-    trade_start_time = datetime.time(18, 45)
-    trade_end_time = datetime.time(14, 45)
-
-    fixed_stoploss = -3000
-    stoploss = 0
-    target = 0
-    step = 0
-
+def RunSystem(kite, access_token, trades):
+    fixed_stoploss = trades['fixed_stoploss']
+    stoploss = trades['stoploss']
+    target = trades['target']
+    step = trades['step']
+    transaction_types = ['BUY', 'SELL']
+    transaction_types.remove(trades['transaction_type'])
+    exit_transaction_type = transaction_types[0]
     positions_info = FetchPositionsInfo(kite)
 
     # this takes care of restartng from middle runs
@@ -23,34 +22,41 @@ def RunSystem(kite, access_token, lots):
         position_flag = False
     else:
         #TODO Change this to true
-        position_flag = False
-        positions_info = FetchPositionsInfo(kite)
-        stoploss, target, step = GetStoplossTargetValues(positions_info)
+        position_flag = True
 
+    # TODO remove this counter
+    # count = 0
     while True:
         current_time = datetime.datetime.now().time()
-        if current_time >= trade_start_time and position_flag == False:
-            atm_strike = GetATMStrike('NIFTY BANK')
-            contract_ce, contract_pe = GetCurrentWeeklyOptions(atm_strike, 'BANKNIFTY')
-            order_status_ce = PlaceMarketOrders(access_token, contract_ce, "SELL", "MIS", 25 * lots)
-            print(order_status_ce)
-            yield order_status_ce + "\n"
-            order_status = json.loads(order_status_ce)
-
-            if order_status['status'] == 'success' and order_status['status'] == 'success':
+        if current_time >= trades['trade_time'] and position_flag == False:
+            all_orders_status = []
+            for contract in trades['symbols']:
+                order_status = PlaceMarketOrders(access_token, contract, trades['transaction_type'], trades['product_type'], trades['quantity'])
+                print(order_status)
+                yield order_status + "\n"
+                order_status = json.loads(order_status)
+                all_orders_status.append(order_status)
+            if all(d['status'] == 'success' for d in all_orders_status):
+                yield "################### ALL THE ORDERS ARE SUCCESSFUL ###################" + "\n"
                 positions_info = FetchPositionsInfo(kite)
-                stoploss, target, step = GetStoplossTargetValues(positions_info)
                 position_flag = True
+            elif any(d['status'] == 'error' for d in all_orders_status):
+                yield "################### ONE OF THE ORDERS FAILED ###################" + "\n"
+                # TODO Remove this line
+                # position_flag = True
             else:
-                """remove this"""
+                # TODO Remove this line
                 # position_flag = True
                 continue
 
         pnl = 0
+        # TODO remove this line
+        # count += 1
+
         yield f"CURRENT TIME: {current_time}" + "\n"
         for instrument, instrument_info in positions_info.items():
             ltp = fetch_ltp(instrument_info['token'])
-            print(f"{instrument} ltp: {ltp}")
+            yield f"{instrument} ltp: {ltp}" + "\n"
             pnl = pnl + instrument_info['value_change'] + (
                     instrument_info['quantity'] * ltp * instrument_info['multiplier'])
 
@@ -58,19 +64,24 @@ def RunSystem(kite, access_token, lots):
         yield f"fixed stoploss = {fixed_stoploss}" + "\n"
         yield f"stoploss = {stoploss}" + "\n"
         yield f"target = {target}" + "\n"
-        # time.sleep(2)
-        # os.system('clear')
+        yield "======================================" + "\n"
 
-        # stoploss = -10000
-        instruments = list(positions_info.keys())
         if pnl < fixed_stoploss or pnl < stoploss:
-            order_status = PlaceMarketOrders(access_token, instruments[0], "BUY", "MIS", 25 * lots)
-            return order_status
+            all_orders_status = []
+            for instrument, instrument_info in positions_info.items():
+                order_status = PlaceMarketOrders(access_token, instrument, exit_transaction_type, trades['product_type'], trades['quantity'])
+                all_orders_status.append(order_status)
+            yield str(all_orders_status)
+            return all_orders_status
         elif pnl >= target:
             stoploss = stoploss + step
             target = target + step
-        elif current_time >= trade_end_time:
-            order_status = PlaceMarketOrders(access_token, instruments[0], "BUY", "MIS", 25 * lots)
-            return order_status
+        elif current_time >= trades['exit_time']:
+            all_orders_status = []
+            for contract in trades['symbols']:
+                order_status = PlaceMarketOrders(access_token, contract, exit_transaction_type, trades['product_type'], trades['quantity'])
+                all_orders_status.append(order_status)
+            yield str(all_orders_status)
+            return all_orders_status
 
         time.sleep(1)

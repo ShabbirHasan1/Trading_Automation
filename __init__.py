@@ -12,6 +12,8 @@ from InstrumentList import GetInstrumentList
 from threaded_ticker import GetTickerData
 from automated_system import RunSystem
 from helpers import GetBNFTokens, GetATMStrike
+from BNF_straddle import GetBNFStraddleTrades
+from logging.config import dictConfig
 
 logging.basicConfig(level=logging.DEBUG)
 serializer = lambda obj: isinstance(obj, (date, datetime, Decimal)) and str(obj)  # noqa
@@ -46,13 +48,8 @@ login_template = """ <h2 style="color: green">Success</h2>
     <a target="_blank" href="/positions.json"><h4>Fetch user positions</h4></a>
     <a target="_blank" href="/get_instrument_list.json"><h4>Fetch instrument list</h4></a>
     <a target="_blank" href="/get_ticker_data"><h4>Fetch ticker data</h4></a>
-    <a target="_blank" href="/run_automated_system"><h4>Run automated system</h4></a>
+    <a target="_blank" href="/run_bnf_straddle_automated_system"><h4>Run BANKNIFTY straddle automated system</h4></a>
     <a target="_blank" href="https://kite.trade/docs/connect/v1/"><h4>Checks Kite Connect docs for other calls.</h4></a>
-    
-    <div>
-        <iframe frameborder="0" noresize="noresize"
-     style='background: transparent; width: 100%; height:100%;' src="{url_for('run_automated_system')}"></iframe>
-    </div>
     """
 
 
@@ -163,11 +160,13 @@ def get_ticker_data():
     #                 content_type="text/event-stream")
 
 
-@app.route("/run_automated_system")
+@app.route("/run_bnf_straddle_automated_system")
 def run_automated_system():
     kite = get_kite_client()
-    output = RunSystem(kite, session["access_token"], lots=1)
-    return Response(output, mimetype="text/plain", content_type="text/event-stream")
+    trades = GetBNFStraddleTrades()
+    output = RunSystem(kite, session["access_token"], trades)
+    # return jsonify(output=output)
+    return Response(output, mimetype="text/plain", content_type="text")
 
 
 if __name__ == '__main__':
