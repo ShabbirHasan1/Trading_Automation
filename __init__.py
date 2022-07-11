@@ -21,8 +21,8 @@ serializer = lambda obj: isinstance(obj, (date, datetime, Decimal)) and str(obj)
 PORT = 5010
 HOST = "127.0.0.1"
 
-kite_api_key = "hr1osvvapq449uqf"
-kite_api_secret = "lb1mg1n6pnsj3yj073ycdse1ne3hqywc"
+kite_api_key = "API KEY"
+kite_api_secret = "API SECRET"
 
 redirect_url = "http://{host}:{port}/login".format(host=HOST, port=PORT)
 
